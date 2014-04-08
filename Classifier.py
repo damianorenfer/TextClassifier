@@ -103,9 +103,9 @@ if __name__ == "__main__":
     #load probabilities from file
     #probabilities_positive_word, probabilities_negative_word, positive_apriori_probability = load_probabilities("knowledge_base-01-04-2014_10-59-53.json")
 
-    print(probabilities_positive_word)
-    print(probabilities_negative_word)
-    print(positive_apriori_probability)
+    #print(str(probabilities_positive_word).encode('utf-8'))
+    #print(str(probabilities_negative_word).encode('utf-8'))
+    #print(positive_apriori_probability)
 
     #save_probabilities(probabilities_positive_word, probabilities_negative_word, 0.5)
 
