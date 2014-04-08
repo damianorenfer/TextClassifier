@@ -8,17 +8,28 @@ def parseFile(fileName):
     with open(fileName, 'r', encoding='utf-8') as f:
         text = f.read()
         f.close()
-    return re.findall('[\w]+', text, re.UNICODE)
+    return re.findall('\w+', text, re.UNICODE)
 
-def countWords(pathToFiles, uselessWordsFileName):
-    filesList = os.listdir(pathToFiles)
+def parseTaggedFile(fileName):
+    with open(fileName, 'r', encoding='utf-8') as f:
+        text = f.read()
+        f.close()
+    return re.findall('(\w+)\n', text, re.UNICODE)
 
+def countWords(pathToFiles, uselessWordsFileName, tagged):
     listDico = []
+    
+    filesList = os.listdir(pathToFiles)
     uselessWords = parseFile(uselessWordsFileName)
     
     for fileName in filesList:
         wordCounter = {}
-        words = parseFile(pathToFiles + fileName)
+        
+        if tagged:
+            words = parseTaggedFile(pathToFiles + fileName)
+        else:
+            words = parseFile(pathToFiles + fileName)
+            
         for word in words:
             if word not in uselessWords:
                 if word in wordCounter:
@@ -27,15 +38,4 @@ def countWords(pathToFiles, uselessWordsFileName):
                     wordCounter[word] = 1
         listDico.append(wordCounter)
     return listDico
-
-if __name__ == "__main__":
-    pathPosFiles = '../../pos/'
-    pathNegFiles = '../../neg/'
-    uselessWordsFileName = '../../frenchST.txt'
-
-    posListDict = countWords(pathPosFiles, uselessWordsFileName)
-    negListDict = countWords(pathNegFiles, uselessWordsFileName)
-
-    print(negListDict[4])
-    
     

@@ -80,11 +80,17 @@ if __name__ == "__main__":
     #Lists of dict : {word : count}
     pathPosFiles = './data/pos/'
     pathNegFiles = './data/neg/'
+    pathPosTaggedFiles = './data/tagged/pos/'
+    pathNegTaggedFiles = './data/tagged/neg/'
     uselessWordsFileName = './data/frenchST.txt'
 
-    positive_texts = countWords(pathPosFiles, uselessWordsFileName)
-    negative_texts = countWords(pathNegFiles, uselessWordsFileName)
+    positive_texts = countWords(pathPosFiles, uselessWordsFileName, False)
+    negative_texts = countWords(pathNegFiles, uselessWordsFileName, False)
+    #positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, True)
+    #negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, True)
     test_texts = []
+
+    print("data loaded")
 
     #Lists of dict : {word : probability}
     probabilities_positive_word = compute_probabilities(positive_texts)
