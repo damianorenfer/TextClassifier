@@ -6,7 +6,11 @@ __author__ = 'Damiano Renfer & Mirco Nasuti'
 import json
 import datetime
 import os
+import random
+import argparse
 from DataExtraction import countWords
+
+KNOWLEDGE_BASE_DIVISION = 0.8
 
 def compute_probabilities(words_list):
     """
@@ -36,12 +40,15 @@ def is_text_positive(text, probabilities_positive_word, probabilities_negative_w
     negative_probability = 1.0-positive_apriori_probability
 
     #Positive probability
-    for k, v in text:
-        positive_probability += probabilities_positive_word[k]**v
+    for k, v in text.items():
+        if k in probabilities_positive_word:
+            positive_probability += probabilities_positive_word[k]**v
+
 
     #Negative probability
-    for k, v in text:
-        negative_probability += probabilities_negative_word[k]**v
+    for k, v in text.items():
+        if k in probabilities_negative_word:
+            negative_probability += probabilities_negative_word[k]**v
 
     return positive_probability > negative_probability
 
@@ -75,7 +82,37 @@ def load_probabilities(filename):
 
     return probabilities_positive_word, probabilities_negative_word, positive_apriori_probability
 
+def select_knownledge_texts(positive_texts, negative_texts, knowledge_base_division):
+    positive_initial_size = len(positive_texts)
+    negative_initial_size = len(negative_texts)
+    knowledege_positive_list = []
+    knowledege_negative_list = []
+
+    #Positive texts
+    i = 0
+    while i < knowledge_base_division * positive_initial_size:
+        r = random.randint(0, len(positive_texts)-1)
+        text = positive_texts.pop(r)
+        knowledege_positive_list.append(text)
+        i += 1
+
+    #Negative texts
+    i = 0
+    while i < knowledge_base_division * negative_initial_size:
+        r = random.randint(0, len(negative_texts)-1)
+        text = negative_texts.pop(r)
+        knowledege_negative_list.append(text)
+        i += 1
+
+    return knowledege_positive_list, knowledege_negative_list, positive_texts, negative_texts
+
 if __name__ == "__main__":
+
+    #Args parsing
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--tagged", help="Use tagged texts", action="store_true")
+    parser.add_argument("-d", "--division", help="Corpus division, percent of training texts", type=float)
+    args = parser.parse_args()
 
     #Lists of dict : {word : count}
     pathPosFiles = './data/pos/'
@@ -84,29 +121,62 @@ if __name__ == "__main__":
     pathNegTaggedFiles = './data/tagged/neg/'
     uselessWordsFileName = './data/frenchST.txt'
 
-    positive_texts = countWords(pathPosFiles, uselessWordsFileName, False)
-    negative_texts = countWords(pathNegFiles, uselessWordsFileName, False)
-    #positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, True)
-    #negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, True)
-    test_texts = []
+    if not args.tagged:
+        positive_texts = countWords(pathPosFiles, uselessWordsFileName, False)
+        negative_texts = countWords(pathNegFiles, uselessWordsFileName, False)
+    else:
+        positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, True)
+        negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, True)
 
-    print("data loaded")
+    knowledge_base_division = KNOWLEDGE_BASE_DIVISION
+    if args.division:
+        knowledge_base_division = args.division
+    knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts = select_knownledge_texts(positive_texts, negative_texts, knowledge_base_division)
 
+    #Calculate probabilities
     #Lists of dict : {word : probability}
-    probabilities_positive_word = compute_probabilities(positive_texts)
-    probabilities_negative_word = compute_probabilities(negative_texts)
+    probabilities_positive_word = compute_probabilities(knowledge_positive_texts)
+    probabilities_negative_word = compute_probabilities(knowledge_negative_texts)
 
-    positive_texts_count = len(positive_texts)
-    negative_texts_count = len(negative_texts)
+    positive_texts_count = len(knowledge_positive_texts)
+    negative_texts_count = len(knowledge_negative_texts)
     positive_apriori_probability = positive_texts_count / (positive_texts_count+negative_texts_count)
+
+    #Classificaiton
+    positive_match_count = 0
+    negative_match_count = 0
+
+    #Positive texts
+    positive_test_texts_count = len(test_positive_texts)
+    for i in range(0, positive_test_texts_count):
+        text = test_positive_texts[i]
+        is_positive = is_text_positive(text, probabilities_positive_word, probabilities_negative_word, positive_apriori_probability)
+        if is_positive:
+            positive_match_count += 1
+
+    #Negative texts
+    negative_test_texts_count = len(test_negative_texts)
+    for i in range(0, negative_test_texts_count):
+        text = test_negative_texts[i]
+        is_positive = is_text_positive(text, probabilities_positive_word, probabilities_negative_word, positive_apriori_probability)
+        if not is_positive:
+            negative_match_count += 1
+
+    positive_precision = positive_match_count/positive_test_texts_count
+    negative_precision = negative_match_count/negative_test_texts_count
+    average_precision = (positive_precision + negative_precision)/2
+
+    #Display results
+    print("Positive texts : %s" % len(test_positive_texts))
+    print("Positive texts matches : %s" % positive_match_count)
+    print("Positive precision : %s" % positive_precision)
+    print("Negative texts : %s" % len(test_negative_texts))
+    print("Negative texts matches : %s" % negative_match_count)
+    print("Negative precision : %s" % negative_precision)
+    print("Average precision : %s" % average_precision)
 
     #load probabilities from file
     #probabilities_positive_word, probabilities_negative_word, positive_apriori_probability = load_probabilities("knowledge_base-01-04-2014_10-59-53.json")
-
-    #print(str(probabilities_positive_word).encode('utf-8'))
-    #print(str(probabilities_negative_word).encode('utf-8'))
-    #print(positive_apriori_probability)
-
-    #save_probabilities(probabilities_positive_word, probabilities_negative_word, 0.5)
+    save_probabilities(probabilities_positive_word, probabilities_negative_word, positive_apriori_probability)
 
 
