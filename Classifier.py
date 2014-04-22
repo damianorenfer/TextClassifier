@@ -160,11 +160,11 @@ def cross_validate(n, positive_texts, negative_texts):
     offset_pos = int(len(positive_texts) / n)
     offset_neg = int(len(negative_texts) / n)
 
-    for i in range(0, n-1):
+    for i in range(0, n):
         folder_pos.append(positive_texts[i*offset_pos:(i+1)*offset_pos])
         folder_neg.append(negative_texts[i*offset_neg:(i+1)*offset_neg])
 
-    for i in range(0, n-1):
+    for i in range(0, n):
 
         knowledge_positive_texts = list(positive_texts - folder_pos[i])
         knowledge_negative_texts = list(negative_texts - folder_neg[i])
