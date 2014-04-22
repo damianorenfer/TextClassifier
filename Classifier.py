@@ -165,9 +165,12 @@ def cross_validate(n, positive_texts, negative_texts):
         folder_neg.append(negative_texts[i*offset_neg:(i+1)*offset_neg])
 
     for i in range(0, n):
-
-        knowledge_positive_texts = list(positive_texts - folder_pos[i])
-        knowledge_negative_texts = list(negative_texts - folder_neg[i])
+        knowledge_positive_texts = []
+        knowledge_negative_texts = []
+        for j in range(0, n):
+            if(i!=j):
+                knowledge_positive_texts += folder_pos[j]
+                knowledge_negative_texts += folder_neg[j]
 
         #Calculate probabilities
         #Lists of dict : {word : probability}
