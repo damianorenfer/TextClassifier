@@ -151,14 +151,26 @@ def naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_posi
 
 def cross_validate(n, positive_texts, negative_texts):
     """
-    N Folder - cross validation
+    K-Fold - cross validation
     """
+
+    stats = dict()
+    stats['positive_match_count'] = 0
+    stats['positive_precision'] = 0
+    stats['negative_match_count'] = 0
+    stats['negative_precision'] = 0
+    stats['average_precision'] = 0
 
     folder_pos = []
     folder_neg = []
 
     offset_pos = int(len(positive_texts) / n)
     offset_neg = int(len(negative_texts) / n)
+
+    print("K-Fold Cross validation")
+    print("#Positive texts ~= %s" % offset_pos)
+    print("#Negative texts ~= %s" % offset_neg)
+    print("-------------------------------------------------\n")
 
     for i in range(0, n):
         folder_pos.append(positive_texts[i*offset_pos:(i+1)*offset_pos])
@@ -205,15 +217,30 @@ def cross_validate(n, positive_texts, negative_texts):
         negative_precision = negative_match_count/negative_test_texts_count
         average_precision = (positive_precision + negative_precision)/2
 
-        #Display results
-        print("Positive texts : %s" % len(test_positive_texts))
-        print("Positive texts matches : %s" % positive_match_count)
-        print("Positive precision : %s" % positive_precision)
-        print("Negative texts : %s" % len(test_negative_texts))
-        print("Negative texts matches : %s" % negative_match_count)
-        print("Negative precision : %s" % negative_precision)
-        print("Average precision : %s" % average_precision)
+        stats['positive_match_count'] += positive_match_count
+        stats['positive_precision'] += positive_precision
+        stats['negative_match_count'] += negative_match_count
+        stats['negative_precision'] += negative_precision
+        stats['average_precision'] += average_precision
 
+        #Display results
+        print("K-Fold #%s   : positive_matches=%s, positive_precision=%s" % (i, positive_match_count, positive_precision))
+        print("              negative_matches=%s, negative_precision=%s" % (negative_match_count, negative_precision))
+        print("              average_precision=%s" % average_precision)
+
+    stats['positive_match_count'] /= n
+    stats['positive_precision'] /= n
+    stats['negative_match_count'] /= n
+    stats['negative_precision'] /= n
+    stats['average_precision'] /= n
+
+    print("\n\nOverall results : ")
+    print("-------------------------------------------------")
+    print("Positive texts matches : %s" % stats['positive_match_count'])
+    print("Positive precision : %s" % stats['positive_precision'])
+    print("Negative texts matches : %s" % stats['negative_match_count'])
+    print("Negative precision : %s" % stats['negative_precision'])
+    print("Average precision : %s" % stats['average_precision'])
 
 if __name__ == "__main__":
 
