@@ -5,7 +5,6 @@ __author__ = 'Damiano Renfer & Mirco Nasuti'
 
 import json
 import datetime
-import os
 import random
 import argparse
 from DataExtraction import countWords
@@ -106,6 +105,12 @@ def select_knownledge_texts(positive_texts, negative_texts, knowledge_base_divis
     return knowledege_positive_list, knowledege_negative_list, positive_texts, negative_texts
 
 def naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts) :
+
+    print("Naive validation")
+    print("#Positive texts ~= %s" % len(test_positive_texts))
+    print("#Negative texts ~= %s" % len(test_negative_texts))
+    print("-------------------------------------------------\n")
+
     #Calculate probabilities
     #Lists of dict : {word : probability}
     probabilities_positive_word = compute_probabilities(knowledge_positive_texts)
@@ -140,10 +145,8 @@ def naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_posi
     average_precision = (positive_precision + negative_precision)/2
 
     #Display results
-    print("Positive texts : %s" % len(test_positive_texts))
     print("Positive texts matches : %s" % positive_match_count)
     print("Positive precision : %s" % positive_precision)
-    print("Negative texts : %s" % len(test_negative_texts))
     print("Negative texts matches : %s" % negative_match_count)
     print("Negative precision : %s" % negative_precision)
     print("Average precision : %s" % average_precision)
@@ -257,21 +260,24 @@ if __name__ == "__main__":
     pathNegTaggedFiles = './data/tagged/neg/'
     uselessWordsFileName = './data/frenchST.txt'
 
-    if not args.tagged:
-        positive_texts = countWords(pathPosFiles, uselessWordsFileName, False)
-        negative_texts = countWords(pathNegFiles, uselessWordsFileName, False)
-    else:
-        positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, True)
-        negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, True)
 
     if args.division:
         knowledge_base_division = args.division
     else:
         knowledge_base_division = KNOWLEDGE_BASE_DIVISION
 
-    knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts = select_knownledge_texts(list(positive_texts), list(negative_texts), knowledge_base_division)
-    #naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts)
-    cross_validate(5, positive_texts, negative_texts)
+    if not args.tagged:
+        positive_texts = countWords(pathPosFiles, uselessWordsFileName, False)
+        negative_texts = countWords(pathNegFiles, uselessWordsFileName, False)
+
+        knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts = select_knownledge_texts(list(positive_texts), list(negative_texts), knowledge_base_division)
+        naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts)
+    else:
+        positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, True)
+        negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, True)
+
+        knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts = select_knownledge_texts(list(positive_texts), list(negative_texts), knowledge_base_division)
+        cross_validate(5, positive_texts, negative_texts)
 
     #load probabilities from file
     #probabilities_positive_word, probabilities_negative_word, positive_apriori_probability = load_probabilities("knowledge_base-01-04-2014_10-59-53.json")
