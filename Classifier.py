@@ -7,6 +7,7 @@ import json
 import datetime
 import random
 import argparse
+import os
 from DataExtraction import countWords
 
 KNOWLEDGE_BASE_DIVISION = 0.8
@@ -183,9 +184,12 @@ def cross_validate(n, positive_texts, negative_texts):
         knowledge_positive_texts = []
         knowledge_negative_texts = []
         for j in range(0, n):
-            if(i!=j):
+            if i != j :
                 knowledge_positive_texts += folder_pos[j]
                 knowledge_negative_texts += folder_neg[j]
+
+        test_positive_texts = folder_pos[i]
+        test_negative_texts = folder_neg[i]
 
         #Calculate probabilities
         #Lists of dict : {word : probability}
@@ -249,8 +253,10 @@ if __name__ == "__main__":
 
     #Args parsing
     parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-d", "--division", help="Corpus division, percent of training texts", type=float)
+    group.add_argument("-k", "--kfold", help="K-Fold coefficient", type=int)
     parser.add_argument("-t", "--tagged", help="Use tagged texts", action="store_true")
-    parser.add_argument("-d", "--division", help="Corpus division, percent of training texts", type=float)
     args = parser.parse_args()
 
     #Lists of dict : {word : count}
@@ -260,24 +266,28 @@ if __name__ == "__main__":
     pathNegTaggedFiles = './data/tagged/neg/'
     uselessWordsFileName = './data/frenchST.txt'
 
-
-    if args.division:
-        knowledge_base_division = args.division
-    else:
-        knowledge_base_division = KNOWLEDGE_BASE_DIVISION
+    positive_texts = []
+    negative_texts = []
 
     if not args.tagged:
         positive_texts = countWords(pathPosFiles, uselessWordsFileName, False)
         negative_texts = countWords(pathNegFiles, uselessWordsFileName, False)
 
-        knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts = select_knownledge_texts(list(positive_texts), list(negative_texts), knowledge_base_division)
-        naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts)
     else:
         positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, True)
         negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, True)
 
+    #Naive validation
+    if args.division:
+        knowledge_base_division = args.division
         knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts = select_knownledge_texts(list(positive_texts), list(negative_texts), knowledge_base_division)
-        cross_validate(5, positive_texts, negative_texts)
+        naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts)
+    #Cross validation, default
+    else:
+        k = 5
+        if args.kfold:
+            k = args.kfold
+        cross_validate(k, positive_texts, negative_texts)
 
     #load probabilities from file
     #probabilities_positive_word, probabilities_negative_word, positive_apriori_probability = load_probabilities("knowledge_base-01-04-2014_10-59-53.json")
