@@ -12,7 +12,7 @@ from DataExtraction import countWords
 KNOWLEDGE_BASE_DIVISION = 0.8
 
 
-def compute_probabilities(words_list):
+def compute_probabilities(texts_list):
     """
     words_list is a list of dict : [{word1 : count1}, {word2 : count2}]
     returns a dict : {word: probabilities}
@@ -20,18 +20,18 @@ def compute_probabilities(words_list):
     words_probabilities = {}
     words_occurrences = 0
 
-    for w in words_list:
-        for k, v in w.items():
-            words_occurrences += v
-            if k not in words_probabilities:
-                words_probabilities[k] = v
+    for text in texts_list:
+        for word, word_count in text.items():
+            words_occurrences += word_count
+            if word not in words_probabilities:
+                words_probabilities[word] = word_count
             else:
-                words_probabilities[k] += v
+                words_probabilities[word] += word_count
 
     words_count = len(words_probabilities)
 
-    for k, v in words_probabilities.items():
-        words_probabilities[k] = (v+1)/(words_count+words_occurrences)
+    for word, word_count in words_probabilities.items():
+        words_probabilities[word] = (word_count+1)/(words_count+words_occurrences)
 
     return words_probabilities
 
@@ -41,14 +41,14 @@ def is_text_positive(text, probabilities_positive_word, probabilities_negative_w
     negative_probability = 1.0-positive_apriori_probability
 
     #Positive probability
-    for k, v in text.items():
-        if k in probabilities_positive_word:
-            positive_probability += probabilities_positive_word[k]**v
+    for word, count in text.items():
+        if word in probabilities_positive_word:
+            positive_probability += probabilities_positive_word[word]**count
 
     #Negative probability
-    for k, v in text.items():
-        if k in probabilities_negative_word:
-            negative_probability += probabilities_negative_word[k]**v
+    for word, count in text.items():
+        if word in probabilities_negative_word:
+            negative_probability += probabilities_negative_word[word]**count
 
     return positive_probability > negative_probability
 
@@ -253,8 +253,6 @@ def cross_validate(n, positive_texts, negative_texts):
     stats['average_precision'] /= n
     stats['words_count'] /= n
 
-    save_probabilities(probabilities_positive_word, probabilities_negative_word, positive_apriori_probability)
-
     print("\n\nOverall results : ")
     print("-------------------------------------------------")
     print("Positive texts matches : %s" % stats['positive_match_count'])
@@ -285,12 +283,16 @@ if __name__ == "__main__":
     positive_texts = []
     negative_texts = []
 
-    positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, args.tagged)
-    negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, args.tagged)
+    if args.tagged:
+        positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, True)
+        negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, True)
+    else:
+        positive_texts = countWords(pathPosFiles, uselessWordsFileName, False)
+        negative_texts = countWords(pathNegFiles, uselessWordsFileName, False)
 
     #Naive validation
     if args.division:
-        knowledge_base_division = args.division
+        knowledge_base_division = KNOWLEDGE_BASE_DIVISION
         knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts = select_knownledge_texts(list(positive_texts), list(negative_texts), knowledge_base_division)
         naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts)
     #Cross validation, default
@@ -298,7 +300,7 @@ if __name__ == "__main__":
         k = 5
         if args.kfold:
             k = args.kfold
-        cross_validate(k, positive_texts, negative_texts)
+        cross_validate(k, list(positive_texts), list(negative_texts))
 
     #load probabilities from file
     #probabilities_positive_word, probabilities_negative_word, positive_apriori_probability = load_probabilities("knowledge_base-01-04-2014_10-59-53.json")
