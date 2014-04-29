@@ -7,10 +7,10 @@ import json
 import datetime
 import random
 import argparse
-import os
 from DataExtraction import countWords
 
 KNOWLEDGE_BASE_DIVISION = 0.8
+
 
 def compute_probabilities(words_list):
     """
@@ -35,6 +35,7 @@ def compute_probabilities(words_list):
 
     return words_probabilities
 
+
 def is_text_positive(text, probabilities_positive_word, probabilities_negative_word, positive_apriori_probability):
     positive_probability = positive_apriori_probability
     negative_probability = 1.0-positive_apriori_probability
@@ -51,6 +52,7 @@ def is_text_positive(text, probabilities_positive_word, probabilities_negative_w
 
     return positive_probability > negative_probability
 
+
 def save_probabilities(probabilities_positive_word, probabilities_negative_word, positive_apriori_probability):
     json_file_content = dict()
     json_file_content['probabilities_positive_word'] = probabilities_positive_word
@@ -62,6 +64,7 @@ def save_probabilities(probabilities_positive_word, probabilities_negative_word,
 
     with open(filename, mode="w", encoding="utf-8") as f:
         f.write(txt)
+
 
 def load_probabilities(filename):
     probabilities_positive_word = dict()
@@ -80,6 +83,7 @@ def load_probabilities(filename):
             print(e)
 
     return probabilities_positive_word, probabilities_negative_word, positive_apriori_probability
+
 
 def select_knownledge_texts(positive_texts, negative_texts, knowledge_base_division):
     positive_initial_size = len(positive_texts)
@@ -104,6 +108,7 @@ def select_knownledge_texts(positive_texts, negative_texts, knowledge_base_divis
         i += 1
 
     return knowledege_positive_list, knowledege_negative_list, positive_texts, negative_texts
+
 
 def naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_positive_texts, test_negative_texts) :
 
@@ -152,7 +157,7 @@ def naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_posi
     print("Negative texts matches : %s" % negative_match_count)
     print("Negative precision : %s" % negative_precision)
     print("Average precision : %s" % average_precision)
-    print("Average words count : %s" % total_words_count)
+    print("Words count : %s" % total_words_count)
 
 
 def cross_validate(n, positive_texts, negative_texts):
@@ -248,6 +253,8 @@ def cross_validate(n, positive_texts, negative_texts):
     stats['average_precision'] /= n
     stats['words_count'] /= n
 
+    save_probabilities(probabilities_positive_word, probabilities_negative_word, positive_apriori_probability)
+
     print("\n\nOverall results : ")
     print("-------------------------------------------------")
     print("Positive texts matches : %s" % stats['positive_match_count'])
@@ -256,6 +263,7 @@ def cross_validate(n, positive_texts, negative_texts):
     print("Negative precision : %s" % stats['negative_precision'])
     print("Average precision : %s" % stats['average_precision'])
     print("Average words count : %s" % stats['words_count'])
+
 
 if __name__ == "__main__":
 
@@ -277,13 +285,8 @@ if __name__ == "__main__":
     positive_texts = []
     negative_texts = []
 
-    if not args.tagged:
-        positive_texts = countWords(pathPosFiles, uselessWordsFileName, False)
-        negative_texts = countWords(pathNegFiles, uselessWordsFileName, False)
-
-    else:
-        positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, True)
-        negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, True)
+    positive_texts = countWords(pathPosTaggedFiles, uselessWordsFileName, args.tagged)
+    negative_texts = countWords(pathNegTaggedFiles, uselessWordsFileName, args.tagged)
 
     #Naive validation
     if args.division:
@@ -299,6 +302,5 @@ if __name__ == "__main__":
 
     #load probabilities from file
     #probabilities_positive_word, probabilities_negative_word, positive_apriori_probability = load_probabilities("knowledge_base-01-04-2014_10-59-53.json")
-    #save_probabilities(probabilities_positive_word, probabilities_negative_word, positive_apriori_probability)
 
 
