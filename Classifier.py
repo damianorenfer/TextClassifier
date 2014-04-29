@@ -116,6 +116,7 @@ def naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_posi
     #Lists of dict : {word : probability}
     probabilities_positive_word = compute_probabilities(knowledge_positive_texts)
     probabilities_negative_word = compute_probabilities(knowledge_negative_texts)
+    total_words_count = len(probabilities_positive_word) + len(probabilities_negative_word)
 
     positive_texts_count = len(knowledge_positive_texts)
     negative_texts_count = len(knowledge_negative_texts)
@@ -151,6 +152,7 @@ def naive_validate(knowledge_positive_texts, knowledge_negative_texts, test_posi
     print("Negative texts matches : %s" % negative_match_count)
     print("Negative precision : %s" % negative_precision)
     print("Average precision : %s" % average_precision)
+    print("Average words count : %s" % total_words_count)
 
 
 def cross_validate(n, positive_texts, negative_texts):
@@ -164,6 +166,7 @@ def cross_validate(n, positive_texts, negative_texts):
     stats['negative_match_count'] = 0
     stats['negative_precision'] = 0
     stats['average_precision'] = 0
+    stats['words_count'] = 0
 
     folder_pos = []
     folder_neg = []
@@ -195,6 +198,7 @@ def cross_validate(n, positive_texts, negative_texts):
         #Lists of dict : {word : probability}
         probabilities_positive_word = compute_probabilities(knowledge_positive_texts)
         probabilities_negative_word = compute_probabilities(knowledge_negative_texts)
+        total_words_count = len(probabilities_positive_word) + len(probabilities_negative_word)
 
         positive_texts_count = len(knowledge_positive_texts)
         negative_texts_count = len(knowledge_negative_texts)
@@ -229,17 +233,20 @@ def cross_validate(n, positive_texts, negative_texts):
         stats['negative_match_count'] += negative_match_count
         stats['negative_precision'] += negative_precision
         stats['average_precision'] += average_precision
+        stats['words_count'] += total_words_count
 
         #Display results
         print("K-Fold #%s   : positive_matches=%s, positive_precision=%s" % (i, positive_match_count, positive_precision))
         print("              negative_matches=%s, negative_precision=%s" % (negative_match_count, negative_precision))
         print("              average_precision=%s" % average_precision)
+        print("              #words=%s" % total_words_count)
 
     stats['positive_match_count'] /= n
     stats['positive_precision'] /= n
     stats['negative_match_count'] /= n
     stats['negative_precision'] /= n
     stats['average_precision'] /= n
+    stats['words_count'] /= n
 
     print("\n\nOverall results : ")
     print("-------------------------------------------------")
@@ -248,6 +255,7 @@ def cross_validate(n, positive_texts, negative_texts):
     print("Negative texts matches : %s" % stats['negative_match_count'])
     print("Negative precision : %s" % stats['negative_precision'])
     print("Average precision : %s" % stats['average_precision'])
+    print("Average words count : %s" % stats['words_count'])
 
 if __name__ == "__main__":
 
